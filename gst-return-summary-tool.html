@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GST Return Summary Tool — GSTR-1 & GSTR-3B</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #212d42;
+    --border: #2a3a55;
+    --accent: #00d4aa;
+    --accent2: #0ea5e9;
+    --accent3: #f59e0b;
+    --accent4: #ef4444;
+    --text: #e8f0ff;
+    --text2: #8ba3c7;
+    --text3: #4d6080;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(11,15,26,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 11px; font-weight: 600;
+    color: #000;
+  }
+
+  .logo-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .fy-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+
+  /* ─── TABS ─── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 16px 24px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .tab {
+    padding: 10px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    color: var(--text2);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tab:hover { background: var(--surface2); color: var(--text); }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border-color: var(--accent);
+    border-bottom-color: var(--surface2);
+  }
+
+  .tab-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 0 24px 40px;
+  }
+
+  .panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top: 1px solid var(--accent);
+    border-radius: 0 8px 8px 8px;
+    padding: 24px;
+    display: none;
+  }
+
+  .panel.active { display: block; }
+
+  /* ─── SECTION TITLE ─── */
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── FORM GRID ─── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-group label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .form-group input,
+  .form-group select {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,170,0.08);
+  }
+
+  .form-group select option { background: var(--surface3); }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #00bfa0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--surface3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.3);
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.1); }
+
+  .btn-download {
+    background: linear-gradient(135deg, var(--accent2), #0369a1);
+    color: #fff;
+  }
+  .btn-download:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  /* ─── TABLE ─── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-top: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  thead tr {
+    background: var(--surface3);
+  }
+
+  thead th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+  tbody td {
+    padding: 10px 12px;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+
+  tbody td.num {
+    text-align: right;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  tbody td.green { color: var(--green); }
+  tbody td.yellow { color: var(--yellow); }
+  tbody td.red { color: var(--red); }
+
+  .empty-row td {
+    text-align: center;
+    padding: 30px;
+    color: var(--text3);
+    font-style: italic;
+  }
+
+  /* ─── SUMMARY CARDS ─── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--card-color, var(--accent));
+  }
+
+  .card-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .card-value {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--card-color, var(--accent));
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .card-sub {
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+
+  /* ─── TWO-COL LAYOUT ─── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .tabs { overflow-x: auto; padding-bottom: 0; }
+    .tab { white-space: nowrap; }
+    header { padding: 0 16px; }
+    .main { padding: 0 16px 40px; }
+    .panel { padding: 16px; }
+    .cards { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+  }
+
+  /* ─── TAX RATE BREAKDOWN ─── */
+  .breakdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .breakdown-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .breakdown-values {
+    display: flex;
+    gap: 20px;
+  }
+
+  .breakdown-val {
+    text-align: right;
+  }
+
+  .breakdown-val .val-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .breakdown-val .val-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ─── ITC SECTION ─── */
+  .itc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  /* ─── STATUS BADGE ─── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: rgba(16,185,129,0.12); color: var(--green); }
+  .badge-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
+
+  /* ─── GSTR3B LIABILITY TABLE ─── */
+  .liability-section {
+    margin-top: 20px;
+  }
+
+  .liability-row {
+    display: grid;
+    grid-template-columns: 2fr repeat(4, 1fr);
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    align-items: center;
+  }
+
+  .liability-row.header {
+    background: var(--surface3);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 6px 6px 0 0;
+    font-weight: 600;
+  }
+
+  .liability-row.total-row {
+    background: rgba(0,212,170,0.06);
+    border-top: 1px solid var(--accent);
+    border-bottom: none;
+    border-radius: 0 0 6px 6px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .liability-row .cell-right {
+    text-align: right;
+  }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--accent);
+    color: #000;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(.22,1,.36,1);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ─── REPORT PREVIEW ─── */
+  .report-header {
+    text-align: center;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+
+  .report-header h2 {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+
+  .report-header p {
+    color: var(--text2);
+    font-size: 12px;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+  }
+
+  .net-tax-box {
+    background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(14,165,233,0.08));
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .net-tax-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .net-tax-value {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .scrollable { max-height: 340px; overflow-y: auto; }
+  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable::-webkit-scrollbar-track { background: transparent; }
+  .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">GST</div>
+    <div>
+      <div class="logo-text">ReturnPro</div>
+      <div class="logo-sub">GSTR-1 &amp; GSTR-3B Summary Tool</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="fy-badge" id="fyLabel">FY 2024-25</span>
+    <div class="form-group" style="margin:0">
+      <select id="fySelect" style="padding:5px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--font-mono)">
+        <option value="2024-25">FY 2024-25</option>
+        <option value="2023-24">FY 2023-24</option>
+        <option value="2025-26">FY 2025-26</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('gstr1')">
+    <span class="tab-dot"></span>GSTR-1 Sales Entry
+  </div>
+  <div class="tab" onclick="switchTab('itc')">
+    <span class="tab-dot"></span>ITC &amp; Purchases
+  </div>
+  <div class="tab" onclick="switchTab('gstr3b')">
+    <span class="tab-dot"></span>GSTR-3B Summary
+  </div>
+  <div class="tab" onclick="switchTab('report')">
+    <span class="tab-dot"></span>Report &amp; Download
+  </div>
+</div>
+
+<!-- ═══════════════ GSTR-1 PANEL ═══════════════ -->
+<div class="main">
+<div class="panel active" id="tab-gstr1">
+
+  <div class="section-title">Business Details</div>
+  <div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+    <div class="form-group">
+      <label>GSTIN</label>
+      <input type="text" id="gstin" placeholder="e.g. 22AAAAA0000A1Z5" maxlength="15" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="form-group">
+      <label>Taxpayer Name</label>
+      <input type="text" id="taxpayerName" placeholder="Business / Firm Name">
+    </div>
+    <div class="form-group">
+      <label>Tax Period (Month)</label>
+      <select id="taxPeriod">
+        <option value="Apr">April</option><option value="May">May</option>
+        <option value="Jun">June</option><option value="Jul">July</option>
+        <option value="Aug">August</option><option value="Sep">September</option>
+        <option value="Oct">October</option><option value="Nov">November</option>
+        <option value="Dec">December</option><option value="Jan">January</option>
+        <option value="Feb">February</option><option value="Mar">March</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>State</label>
+      <select id="state">
+        <option>Chhattisgarh</option><option>Maharashtra</option><option>Delhi</option>
+        <option>Gujarat</option><option>Rajasthan</option><option>Uttar Pradesh</option>
+        <option>Karnataka</option><option>Tamil Nadu</option><option>West Bengal</option>
+        <option>Madhya Pradesh</option><option>Punjab</option><option>Haryana</option>
+        <option>Telangana</option><option>Andhra Pradesh</option><option>Kerala</option>
+        <option>Bihar</option><option>Odisha</option><option>Jharkhand</option>
+        <option>Assam</option><option>Himachal Pradesh</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:24px">Add Sales Invoice (B2B / B2C)</div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Invoice No.</label>
+      <input type="text" id="invNo" placeholder="INV-001">
+    </div>
+    <div class="form-group">
+      <label>Invoice Date</label>
+      <input type="date" id="invDate">
+    </div>
+    <div class="form-group">
+      <label>Buyer Name</label>
+      <input type="text" id="buyerName" placeholder="Party Name">
+    </div>
+    <div class="form-group">
+      <label>Buyer GSTIN (B2B)</label>
+      <input type="text" id="buyerGSTIN" placeholder="Leave blank for B2C" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="form-group">
+      <label>Place of Supply</label>
+      <select id="pos">
+        <option>Intra-State</option><option>Inter-State</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Taxable Amount (₹)</label>
+      <input type="number" id="taxable" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>GST Rate (%)</label>
+      <select id="gstRate">
+        <option value="0">0%</option>
+        <option value="5">5%</option>
+        <option value="12">12%</option>
+        <option value="18" selected>18%</option>
+        <option value="28">28%</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Invoice Type</label>
+      <select id="invType">
+        <option value="B2B">B2B (Registered)</option>
+        <option value="B2C">B2C (Unregistered)</option>
+        <option value="EXP">Export</option>
+        <option value="SEZ">SEZ Supply</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addInvoice()">+ Add Invoice</button>
+    <button class="btn btn-secondary" onclick="clearForm()">↺ Clear</button>
+    <button class="btn btn-secondary" onclick="loadSampleData()">⌘ Load Sample Data</button>
+  </div>
+
+  <!-- Sales Table -->
+  <div class="table-wrap" style="margin-top:24px">
+    <div class="scrollable">
+    <table id="salesTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Inv. No.</th>
+          <th>Date</th>
+          <th>Party</th>
+          <th>Type</th>
+          <th>POS</th>
+          <th>Rate</th>
+          <th>Taxable (₹)</th>
+          <th>CGST (₹)</th>
+          <th>SGST (₹)</th>
+          <th>IGST (₹)</th>
+          <th>Total (₹)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="salesBody">
+        <tr class="empty-row"><td colspan="13">No invoices added yet. Add your first invoice above.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- GSTR-1 Summary Cards -->
+  <div class="section-title" style="margin-top:28px">GSTR-1 Summary</div>
+  <div class="cards" id="gstr1Cards">
+    <div class="card" style="--card-color:var(--accent)">
+      <div class="card-label">Total Invoices</div>
+      <div class="card-value" id="totalInvoices">0</div>
+      <div class="card-sub">Entries added</div>
+    </div>
+    <div class="card" style="--card-color:var(--accent2)">
+      <div class="card-label">Gross Sales</div>
+      <div class="card-value" id="grossSales">₹0</div>
+      <div class="card-sub">Taxable value</div>
+    </div>
+    <div class="card" style="--card-color:var(--yellow)">
+      <div class="card-label">Total GST</div>
+      <div class="card-value" id="totalGST">₹0</div>
+      <div class="card-sub">Output tax liability</div>
+    </div>
+    <div class="card" style="--card-color:var(--green)">
+      <div class="card-label">Total Invoice Value</div>
+      <div class="card-value" id="totalInvValue">₹0</div>
+      <div class="card-sub">Including GST</div>
+    </div>
+  </div>
+
+  <!-- Tax Rate Breakdown -->
+  <div class="section-title">Tax Rate Breakdown</div>
+  <div id="breakdownContainer"></div>
+
+</div>
+
+<!-- ═══════════════ ITC / PURCHASES PANEL ═══════════════ -->
+<div class="panel" id="tab-itc">
+
+  <div class="section-title">Add Purchase / Input Tax Credit (ITC)</div>
+
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Supplier Name</label>
+      <input type="text" id="supName" placeholder="Supplier Party Name">
+    </div>
+    <div class="form-group">
+      <label>Supplier GSTIN</label>
+      <input type="text" id="supGSTIN" placeholder="Supplier GSTIN" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="form-group">
+      <label>Purchase Invoice No.</label>
+      <input type="text" id="purInvNo" placeholder="PUR-001">
+    </div>
+    <div class="form-group">
+      <label>Invoice Date</label>
+      <input type="date" id="purDate">
+    </div>
+    <div class="form-group">
+      <label>Taxable Amount (₹)</label>
+      <input type="number" id="purTaxable" placeholder="0.00" min="0" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>GST Rate (%)</label>
+      <select id="purRate">
+        <option value="0">0%</option>
+        <option value="5">5%</option>
+        <option value="12">12%</option>
+        <option value="18" selected>18%</option>
+        <option value="28">28%</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>ITC Eligible?</label>
+      <select id="itcEligible">
+        <option value="yes">Yes — Fully Eligible</option>
+        <option value="partial">Partial</option>
+        <option value="no">No — Ineligible (Sec 17(5))</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Purchase Type</label>
+      <select id="purType">
+        <option>Goods</option>
+        <option>Services</option>
+        <option>Capital Goods</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="addPurchase()">+ Add Purchase</button>
+    <button class="btn btn-secondary" onclick="clearPurchaseForm()">↺ Clear</button>
+    <button class="btn btn-secondary" onclick="loadSamplePurchases()">⌘ Load Samples</button>
+  </div>
+
+  <div class="table-wrap" style="margin-top:24px">
+    <div class="scrollable">
+    <table id="purchaseTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Supplier</th>
+          <th>GSTIN</th>
+          <th>Inv. No.</th>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Rate</th>
+          <th>Taxable (₹)</th>
+          <th>CGST (₹)</th>
+          <th>SGST (₹)</th>
+          <th>IGST (₹)</th>
+          <th>ITC</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="purchaseBody">
+        <tr class="empty-row"><td colspan="13">No purchases added yet.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ITC Summary -->
+  <div class="section-title" style="margin-top:28px">ITC Summary</div>
+  <div class="cards" id="itcCards">
+    <div class="card" style="--card-color:var(--accent)">
+      <div class="card-label">Total Purchases</div>
+      <div class="card-value" id="totalPurchases">₹0</div>
+      <div class="card-sub">Taxable value</div>
+    </div>
+    <div class="card" style="--card-color:var(--green)">
+      <div class="card-label">Eligible ITC</div>
+      <div class="card-value" id="eligibleITC">₹0</div>
+      <div class="card-sub">CGST + SGST + IGST</div>
+    </div>
+    <div class="card" style="--card-color:var(--red)">
+      <div class="card-label">Ineligible ITC</div>
+      <div class="card-value" id="ineligibleITC">₹0</div>
+      <div class="card-sub">Sec 17(5) blocked</div>
+    </div>
+    <div class="card" style="--card-color:var(--accent2)">
+      <div class="card-label">ITC CGST</div>
+      <div class="card-value" id="itcCGST">₹0</div>
+      <div class="card-sub">Central tax credit</div>
+    </div>
+    <div class="card" style="--card-color:var(--yellow)">
+      <div class="card-label">ITC SGST</div>
+      <div class="card-value" id="itcSGST">₹0</div>
+      <div class="card-sub">State tax credit</div>
+    </div>
+    <div class="card" style="--card-color:var(--accent)">
+      <div class="card-label">ITC IGST</div>
+      <div class="card-value" id="itcIGST">₹0</div>
+      <div class="card-sub">Integrated tax credit</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ GSTR-3B PANEL ═══════════════ -->
+<div class="panel" id="tab-gstr3b">
+
+  <div class="section-title">3.1 — Outward Supplies &amp; Tax Liability</div>
+
+  <div class="liability-section">
+    <div class="liability-row header">
+      <div>Nature of Supplies</div>
+      <div class="cell-right">Taxable Value (₹)</div>
+      <div class="cell-right">IGST (₹)</div>
+      <div class="cell-right">CGST (₹)</div>
+      <div class="cell-right">SGST (₹)</div>
+    </div>
+    <div class="liability-row" id="row-b2b">
+      <div>B2B Supplies (Taxable)</div>
+      <div class="cell-right" id="b2b-taxable">0.00</div>
+      <div class="cell-right" id="b2b-igst">0.00</div>
+      <div class="cell-right" id="b2b-cgst">0.00</div>
+      <div class="cell-right" id="b2b-sgst">0.00</div>
+    </div>
+    <div class="liability-row" id="row-b2c">
+      <div>B2C Supplies (Taxable)</div>
+      <div class="cell-right" id="b2c-taxable">0.00</div>
+      <div class="cell-right" id="b2c-igst">0.00</div>
+      <div class="cell-right" id="b2c-cgst">0.00</div>
+      <div class="cell-right" id="b2c-sgst">0.00</div>
+    </div>
+    <div class="liability-row">
+      <div>Zero-Rated Supplies (Export/SEZ)</div>
+      <div class="cell-right" id="exp-taxable">0.00</div>
+      <div class="cell-right" id="exp-igst">0.00</div>
+      <div class="cell-right">—</div>
+      <div class="cell-right">—</div>
+    </div>
+    <div class="liability-row">
+      <div>Nil / Exempt / Non-GST Supplies</div>
+      <div class="cell-right" id="nil-taxable">0.00</div>
+      <div class="cell-right">—</div>
+      <div class="cell-right">—</div>
+      <div class="cell-right">—</div>
+    </div>
+    <div class="liability-row total-row">
+      <div>TOTAL OUTPUT TAX LIABILITY</div>
+      <div class="cell-right" id="total3b-taxable">0.00</div>
+      <div class="cell-right" id="total3b-igst">0.00</div>
+      <div class="cell-right" id="total3b-cgst">0.00</div>
+      <div class="cell-right" id="total3b-sgst">0.00</div>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:28px">4 — Eligible ITC</div>
+
+  <div class="liability-section">
+    <div class="liability-row header">
+      <div>ITC Details</div>
+      <div class="cell-right">IGST (₹)</div>
+      <div class="cell-right">CGST (₹)</div>
+      <div class="cell-right">SGST (₹)</div>
+      <div class="cell-right">Total (₹)</div>
+    </div>
+    <div class="liability-row">
+      <div>ITC Available (A) — All other ITC</div>
+      <div class="cell-right" id="itc-igst-3b">0.00</div>
+      <div class="cell-right" id="itc-cgst-3b">0.00</div>
+      <div class="cell-right" id="itc-sgst-3b">0.00</div>
+      <div class="cell-right" id="itc-total-3b">0.00</div>
+    </div>
+    <div class="liability-row">
+      <div>ITC Reversed (B) — Ineligible</div>
+      <div class="cell-right" id="itc-rev-igst">0.00</div>
+      <div class="cell-right" id="itc-rev-cgst">0.00</div>
+      <div class="cell-right" id="itc-rev-sgst">0.00</div>
+      <div class="cell-right" id="itc-rev-total">0.00</div>
+    </div>
+    <div class="liability-row total-row">
+      <div>NET ITC AVAILABLE (A − B)</div>
+      <div class="cell-right" id="net-itc-igst">0.00</div>
+      <div class="cell-right" id="net-itc-cgst">0.00</div>
+      <div class="cell-right" id="net-itc-sgst">0.00</div>
+      <div class="cell-right" id="net-itc-total">0.00</div>
+    </div>
+  </div>
+
+  <!-- Net Tax Payable Box -->
+  <div class="net-tax-box">
+    <div>
+      <div class="net-tax-label">5.1 — Net Tax Payable (after ITC setoff)</div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text3);margin-top:4px">
+        Output Tax Liability − Net ITC Available
+      </div>
+    </div>
+    <div style="text-align:right">
+      <div class="net-tax-value" id="netTaxPayable">₹0.00</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:4px">
+        Cash ledger payment required
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:20px">
+    <div>
+      <div class="section-title">Tax-head wise payable</div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">IGST Payable</div>
+        <div class="breakdown-values">
+          <div class="breakdown-val">
+            <div class="val-label">Amount</div>
+            <div class="val-num" id="igst-payable">₹0.00</div>
+          </div>
+        </div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">CGST Payable</div>
+        <div class="breakdown-values">
+          <div class="breakdown-val">
+            <div class="val-label">Amount</div>
+            <div class="val-num" id="cgst-payable">₹0.00</div>
+          </div>
+        </div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label">SGST/UTGST Payable</div>
+        <div class="breakdown-values">
+          <div class="breakdown-val">
+            <div class="val-label">Amount</div>
+            <div class="val-num" id="sgst-payable">₹0.00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Filing Status</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="breakdown-row" style="justify-content:space-between">
+          <span class="breakdown-label">GSTR-1 Status</span>
+          <span class="badge badge-yellow" id="gstr1Status">⏳ Pending</span>
+        </div>
+        <div class="breakdown-row" style="justify-content:space-between">
+          <span class="breakdown-label">GSTR-3B Status</span>
+          <span class="badge badge-yellow" id="gstr3bStatus">⏳ Pending</span>
+        </div>
+        <button class="btn btn-primary" style="margin-top:6px;width:100%;justify-content:center" onclick="markFiled('gstr1')">✓ Mark GSTR-1 Filed</button>
+        <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="markFiled('gstr3b')">✓ Mark GSTR-3B Filed</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════ REPORT PANEL ═══════════════ -->
+<div class="panel" id="tab-report">
+
+  <div class="report-header">
+    <h2>GST RETURN SUMMARY REPORT</h2>
+    <p id="reportMeta">Taxpayer: — | Period: — | GSTIN: —</p>
+  </div>
+
+  <div class="section-title">Complete Summary</div>
+  <div class="cards" id="reportCards">
+    <div class="card" style="--card-color:var(--accent2)">
+      <div class="card-label">Gross Turnover</div>
+      <div class="card-value" id="rGrossTurnover">₹0</div>
+      <div class="card-sub">Total taxable sales</div>
+    </div>
+    <div class="card" style="--card-color:var(--yellow)">
+      <div class="card-label">Output Tax</div>
+      <div class="card-value" id="rOutputTax">₹0</div>
+      <div class="card-sub">IGST + CGST + SGST</div>
+    </div>
+    <div class="card" style="--card-color:var(--green)">
+      <div class="card-label">ITC Claimed</div>
+      <div class="card-value" id="rITCClaimed">₹0</div>
+      <div class="card-sub">Net eligible ITC</div>
+    </div>
+    <div class="card" style="--card-color:var(--accent)">
+      <div class="card-label">Net Tax Payable</div>
+      <div class="card-value" id="rNetTax">₹0</div>
+      <div class="card-sub">Cash to be paid</div>
+    </div>
+  </div>
+
+  <!-- Detailed Summary Table -->
+  <div class="section-title" style="margin-top:8px">Detailed Tax Breakdown</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Particulars</th>
+          <th style="text-align:right">IGST (₹)</th>
+          <th style="text-align:right">CGST (₹)</th>
+          <th style="text-align:right">SGST (₹)</th>
+          <th style="text-align:right">Total (₹)</th>
+        </tr>
+      </thead>
+      <tbody id="reportDetailBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Invoice List in Report -->
+  <div class="section-title" style="margin-top:24px">Invoice-wise Sales List</div>
+  <div class="table-wrap">
+    <div class="scrollable">
+    <table id="reportSalesTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Inv No.</th><th>Date</th><th>Party</th><th>Type</th>
+          <th style="text-align:right">Taxable (₹)</th>
+          <th style="text-align:right">CGST (₹)</th>
+          <th style="text-align:right">SGST (₹)</th>
+          <th style="text-align:right">IGST (₹)</th>
+          <th style="text-align:right">Total (₹)</th>
+        </tr>
+      </thead>
+      <tbody id="reportSalesBody"></tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Download Section -->
+  <div class="section-title" style="margin-top:28px">Download Options</div>
+  <div class="btn-row" style="gap:12px">
+    <button class="btn btn-download" onclick="downloadReport('csv')">⬇ Download CSV</button>
+    <button class="btn btn-download" onclick="downloadReport('json')">⬇ Download JSON</button>
+    <button class="btn btn-download" onclick="printReport()">🖨 Print / PDF</button>
+    <button class="btn btn-secondary" onclick="resetAll()">⚠ Reset All Data</button>
+  </div>
+
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───
+let invoices = [];
+let purchases = [];
+let gstr1Filed = false;
+let gstr3bFiled = false;
+
+// ─── TAB SWITCHING ───
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const tabs = ['gstr1','itc','gstr3b','report'];
+  const idx = tabs.indexOf(tab);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'gstr3b') updateGSTR3B();
+  if (tab === 'report') updateReport();
+}
+
+// ─── FY LABEL ───
+document.getElementById('fySelect').addEventListener('change', function() {
+  document.getElementById('fyLabel').textContent = 'FY ' + this.value;
+});
+
+// ─── INVOICE MANAGEMENT ───
+function addInvoice() {
+  const invNo = document.getElementById('invNo').value.trim();
+  const invDate = document.getElementById('invDate').value;
+  const buyerName = document.getElementById('buyerName').value.trim();
+  const buyerGSTIN = document.getElementById('buyerGSTIN').value.trim();
+  const pos = document.getElementById('pos').value;
+  const taxable = parseFloat(document.getElementById('taxable').value) || 0;
+  const rate = parseFloat(document.getElementById('gstRate').value);
+  const invType = document.getElementById('invType').value;
+
+  if (!invNo || !invDate || !buyerName || taxable <= 0) {
+    showToast('⚠ Please fill Inv No, Date, Buyer Name & Taxable Amount', 'red');
+    return;
+  }
+
+  const totalTax = taxable * rate / 100;
+  const isIntraState = pos === 'Intra-State';
+
+  const inv = {
+    id: Date.now(),
+    invNo, invDate, buyerName, buyerGSTIN, pos, taxable, rate, invType,
+    cgst: isIntraState ? totalTax / 2 : 0,
+    sgst: isIntraState ? totalTax / 2 : 0,
+    igst: isIntraState ? 0 : totalTax,
+    total: taxable + totalTax
+  };
+
+  invoices.push(inv);
+  renderSalesTable();
+  updateGSTR1Summary();
+  clearForm();
+  showToast('✓ Invoice added successfully');
+}
+
+function deleteInvoice(id) {
+  invoices = invoices.filter(i => i.id !== id);
+  renderSalesTable();
+  updateGSTR1Summary();
+  showToast('Invoice removed');
+}
+
+function renderSalesTable() {
+  const body = document.getElementById('salesBody');
+  if (invoices.length === 0) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="13">No invoices added yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = invoices.map((inv, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${inv.invNo}</td>
+      <td>${inv.invDate}</td>
+      <td>${inv.buyerName}</td>
+      <td><span class="badge ${inv.invType === 'B2B' ? 'badge-green' : 'badge-yellow'}">${inv.invType}</span></td>
+      <td>${inv.pos === 'Intra-State' ? 'Intra' : 'Inter'}</td>
+      <td>${inv.rate}%</td>
+      <td class="num">${fmt(inv.taxable)}</td>
+      <td class="num ${inv.cgst > 0 ? 'green' : ''}">${fmt(inv.cgst)}</td>
+      <td class="num ${inv.sgst > 0 ? 'green' : ''}">${fmt(inv.sgst)}</td>
+      <td class="num ${inv.igst > 0 ? 'yellow' : ''}">${fmt(inv.igst)}</td>
+      <td class="num">${fmt(inv.total)}</td>
+      <td><button class="btn btn-danger" onclick="deleteInvoice(${inv.id})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateGSTR1Summary() {
+  const total = invoices.reduce((a, i) => ({
+    taxable: a.taxable + i.taxable,
+    gst: a.gst + i.cgst + i.sgst + i.igst,
+    total: a.total + i.total
+  }), { taxable: 0, gst: 0, total: 0 });
+
+  document.getElementById('totalInvoices').textContent = invoices.length;
+  document.getElementById('grossSales').textContent = '₹' + fmtK(total.taxable);
+  document.getElementById('totalGST').textContent = '₹' + fmtK(total.gst);
+  document.getElementById('totalInvValue').textContent = '₹' + fmtK(total.total);
+
+  // Tax rate breakdown
+  const rates = [0, 5, 12, 18, 28];
+  const container = document.getElementById('breakdownContainer');
+  if (invoices.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = rates.map(r => {
+    const filtered = invoices.filter(i => i.rate === r);
+    if (filtered.length === 0) return '';
+    const t = filtered.reduce((a, i) => ({
+      taxable: a.taxable + i.taxable,
+      cgst: a.cgst + i.cgst,
+      sgst: a.sgst + i.sgst,
+      igst: a.igst + i.igst
+    }), { taxable: 0, cgst: 0, sgst: 0, igst: 0 });
+    return `
+      <div class="breakdown-row">
+        <div class="breakdown-label">${r}% GST Slab (${filtered.length} invoices)</div>
+        <div class="breakdown-values">
+          <div class="breakdown-val">
+            <div class="val-label">Taxable</div>
+            <div class="val-num">₹${fmt(t.taxable)}</div>
+          </div>
+          <div class="breakdown-val">
+            <div class="val-label">CGST</div>
+            <div class="val-num">₹${fmt(t.cgst)}</div>
+          </div>
+          <div class="breakdown-val">
+            <div class="val-label">SGST</div>
+            <div class="val-num">₹${fmt(t.sgst)}</div>
+          </div>
+          <div class="breakdown-val">
+            <div class="val-label">IGST</div>
+            <div class="val-num">₹${fmt(t.igst)}</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─── PURCHASE MANAGEMENT ───
+function addPurchase() {
+  const supName = document.getElementById('supName').value.trim();
+  const supGSTIN = document.getElementById('supGSTIN').value.trim();
+  const purInvNo = document.getElementById('purInvNo').value.trim();
+  const purDate = document.getElementById('purDate').value;
+  const taxable = parseFloat(document.getElementById('purTaxable').value) || 0;
+  const rate = parseFloat(document.getElementById('purRate').value);
+  const itcEligible = document.getElementById('itcEligible').value;
+  const purType = document.getElementById('purType').value;
+
+  if (!supName || !purInvNo || taxable <= 0) {
+    showToast('⚠ Fill Supplier Name, Inv No & Taxable Amount', 'red');
+    return;
+  }
+
+  const totalTax = taxable * rate / 100;
+  const cgst = totalTax / 2;
+  const sgst = totalTax / 2;
+  const igst = 0; // simplified: intra-state purchases
+
+  const pur = {
+    id: Date.now(), supName, supGSTIN, purInvNo, purDate, taxable, rate,
+    itcEligible, purType, cgst, sgst, igst,
+    eligibleTax: itcEligible === 'yes' ? totalTax : (itcEligible === 'partial' ? totalTax / 2 : 0),
+    ineligibleTax: itcEligible === 'no' ? totalTax : (itcEligible === 'partial' ? totalTax / 2 : 0)
+  };
+
+  purchases.push(pur);
+  renderPurchaseTable();
+  updateITCSummary();
+  clearPurchaseForm();
+  showToast('✓ Purchase added successfully');
+}
+
+function deletePurchase(id) {
+  purchases = purchases.filter(p => p.id !== id);
+  renderPurchaseTable();
+  updateITCSummary();
+}
+
+function renderPurchaseTable() {
+  const body = document.getElementById('purchaseBody');
+  if (purchases.length === 0) {
+    body.innerHTML = '<tr class="empty-row"><td colspan="13">No purchases added yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = purchases.map((p, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${p.supName}</td>
+      <td style="font-size:10px">${p.supGSTIN || '—'}</td>
+      <td>${p.purInvNo}</td>
+      <td>${p.purDate || '—'}</td>
+      <td>${p.purType}</td>
+      <td>${p.rate}%</td>
+      <td class="num">${fmt(p.taxable)}</td>
+      <td class="num">${fmt(p.cgst)}</td>
+      <td class="num">${fmt(p.sgst)}</td>
+      <td class="num">${fmt(p.igst)}</td>
+      <td><span class="badge ${p.itcEligible === 'yes' ? 'badge-green' : p.itcEligible === 'partial' ? 'badge-yellow' : ''}">${p.itcEligible === 'yes' ? '✓ Yes' : p.itcEligible === 'partial' ? '~ Partial' : '✕ No'}</span></td>
+      <td><button class="btn btn-danger" onclick="deletePurchase(${p.id})">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function updateITCSummary() {
+  const totals = purchases.reduce((a, p) => ({
+    taxable: a.taxable + p.taxable,
+    eligible: a.eligible + p.eligibleTax,
+    ineligible: a.ineligible + p.ineligibleTax,
+    cgst: a.cgst + (p.itcEligible === 'yes' ? p.cgst : p.itcEligible === 'partial' ? p.cgst / 2 : 0),
+    sgst: a.sgst + (p.itcEligible === 'yes' ? p.sgst : p.itcEligible === 'partial' ? p.sgst / 2 : 0),
+    igst: a.igst + (p.itcEligible === 'yes' ? p.igst : p.itcEligible === 'partial' ? p.igst / 2 : 0)
+  }), { taxable: 0, eligible: 0, ineligible: 0, cgst: 0, sgst: 0, igst: 0 });
+
+  document.getElementById('totalPurchases').textContent = '₹' + fmtK(totals.taxable);
+  document.getElementById('eligibleITC').textContent = '₹' + fmtK(totals.eligible);
+  document.getElementById('ineligibleITC').textContent = '₹' + fmtK(totals.ineligible);
+  document.getElementById('itcCGST').textContent = '₹' + fmtK(totals.cgst);
+  document.getElementById('itcSGST').textContent = '₹' + fmtK(totals.sgst);
+  document.getElementById('itcIGST').textContent = '₹' + fmtK(totals.igst);
+}
+
+// ─── GSTR-3B ───
+function updateGSTR3B() {
+  const b2b = invoices.filter(i => i.invType === 'B2B');
+  const b2c = invoices.filter(i => i.invType === 'B2C');
+  const exp = invoices.filter(i => i.invType === 'EXP' || i.invType === 'SEZ');
+  const nil = invoices.filter(i => i.rate === 0);
+
+  const sum = arr => arr.reduce((a, i) => ({
+    taxable: a.taxable + i.taxable,
+    igst: a.igst + i.igst,
+    cgst: a.cgst + i.cgst,
+    sgst: a.sgst + i.sgst
+  }), { taxable: 0, igst: 0, cgst: 0, sgst: 0 });
+
+  const b2bS = sum(b2b), b2cS = sum(b2c), expS = sum(exp), nilS = sum(nil);
+  const totalOut = {
+    taxable: b2bS.taxable + b2cS.taxable + expS.taxable,
+    igst: b2bS.igst + b2cS.igst + expS.igst,
+    cgst: b2bS.cgst + b2cS.cgst,
+    sgst: b2bS.sgst + b2cS.sgst
+  };
+
+  set('b2b-taxable', fmt(b2bS.taxable)); set('b2b-igst', fmt(b2bS.igst));
+  set('b2b-cgst', fmt(b2bS.cgst)); set('b2b-sgst', fmt(b2bS.sgst));
+  set('b2c-taxable', fmt(b2cS.taxable)); set('b2c-igst', fmt(b2cS.igst));
+  set('b2c-cgst', fmt(b2cS.cgst)); set('b2c-sgst', fmt(b2cS.sgst));
+  set('exp-taxable', fmt(expS.taxable)); set('exp-igst', fmt(expS.igst));
+  set('nil-taxable', fmt(nilS.taxable));
+  set('total3b-taxable', fmt(totalOut.taxable));
+  set('total3b-igst', fmt(totalOut.igst));
+  set('total3b-cgst', fmt(totalOut.cgst));
+  set('total3b-sgst', fmt(totalOut.sgst));
+
+  // ITC
+  const itcT = purchases.reduce((a, p) => ({
+    cgst: a.cgst + (p.itcEligible === 'yes' ? p.cgst : p.itcEligible === 'partial' ? p.cgst/2 : 0),
+    sgst: a.sgst + (p.itcEligible === 'yes' ? p.sgst : p.itcEligible === 'partial' ? p.sgst/2 : 0),
+    igst: a.igst + (p.itcEligible === 'yes' ? p.igst : p.itcEligible === 'partial' ? p.igst/2 : 0),
+    revCgst: a.revCgst + (p.itcEligible === 'no' ? p.cgst : p.itcEligible === 'partial' ? p.cgst/2 : 0),
+    revSgst: a.revSgst + (p.itcEligible === 'no' ? p.sgst : p.itcEligible === 'partial' ? p.sgst/2 : 0),
+    revIgst: a.revIgst + (p.itcEligible === 'no' ? p.igst : p.itcEligible === 'partial' ? p.igst/2 : 0)
+  }), { cgst:0, sgst:0, igst:0, revCgst:0, revSgst:0, revIgst:0 });
+
+  const itcTotal = itcT.cgst + itcT.sgst + itcT.igst;
+  const revTotal = itcT.revCgst + itcT.revSgst + itcT.revIgst;
+  const netItcCgst = itcT.cgst - itcT.revCgst;
+  const netItcSgst = itcT.sgst - itcT.revSgst;
+  const netItcIgst = itcT.igst - itcT.revIgst;
+  const netItcTotal = netItcCgst + netItcSgst + netItcIgst;
+
+  set('itc-igst-3b', fmt(itcT.igst)); set('itc-cgst-3b', fmt(itcT.cgst));
+  set('itc-sgst-3b', fmt(itcT.sgst)); set('itc-total-3b', fmt(itcTotal));
+  set('itc-rev-igst', fmt(itcT.revIgst)); set('itc-rev-cgst', fmt(itcT.revCgst));
+  set('itc-rev-sgst', fmt(itcT.revSgst)); set('itc-rev-total', fmt(revTotal));
+  set('net-itc-igst', fmt(netItcIgst)); set('net-itc-cgst', fmt(netItcCgst));
+  set('net-itc-sgst', fmt(netItcSgst)); set('net-itc-total', fmt(netItcTotal));
+
+  const outTotal = totalOut.igst + totalOut.cgst + totalOut.sgst;
+  const netPayable = Math.max(0, outTotal - netItcTotal);
+
+  document.getElementById('netTaxPayable').textContent = '₹' + fmt(netPayable);
+
+  // Tax-head wise
+  const igstPayable = Math.max(0, totalOut.igst - netItcIgst);
+  const cgstPayable = Math.max(0, totalOut.cgst - netItcCgst);
+  const sgstPayable = Math.max(0, totalOut.sgst - netItcSgst);
+  document.getElementById('igst-payable').textContent = '₹' + fmt(igstPayable);
+  document.getElementById('cgst-payable').textContent = '₹' + fmt(cgstPayable);
+  document.getElementById('sgst-payable').textContent = '₹' + fmt(sgstPayable);
+}
+
+// ─── FILING STATUS ───
+function markFiled(type) {
+  if (type === 'gstr1') {
+    gstr1Filed = true;
+    document.getElementById('gstr1Status').className = 'badge badge-green';
+    document.getElementById('gstr1Status').textContent = '✓ Filed';
+    showToast('✓ GSTR-1 marked as filed');
+  } else {
+    gstr3bFiled = true;
+    document.getElementById('gstr3bStatus').className = 'badge badge-green';
+    document.getElementById('gstr3bStatus').textContent = '✓ Filed';
+    showToast('✓ GSTR-3B marked as filed');
+  }
+}
+
+// ─── REPORT ───
+function updateReport() {
+  const name = document.getElementById('taxpayerName').value || 'N/A';
+  const gstin = document.getElementById('gstin').value || 'N/A';
+  const period = document.getElementById('taxPeriod').value;
+  const fy = document.getElementById('fySelect').value;
+
+  document.getElementById('reportMeta').textContent =
+    `Taxpayer: ${name} | Period: ${period} ${fy} | GSTIN: ${gstin}`;
+
+  const totalTaxable = invoices.reduce((a, i) => a + i.taxable, 0);
+  const totalIGST = invoices.reduce((a, i) => a + i.igst, 0);
+  const totalCGST = invoices.reduce((a, i) => a + i.cgst, 0);
+  const totalSGST = invoices.reduce((a, i) => a + i.sgst, 0);
+  const outputTax = totalIGST + totalCGST + totalSGST;
+
+  const netITC = purchases.reduce((a, p) => a + p.eligibleTax, 0);
+  const netPayable = Math.max(0, outputTax - netITC);
+
+  document.getElementById('rGrossTurnover').textContent = '₹' + fmtK(totalTaxable);
+  document.getElementById('rOutputTax').textContent = '₹' + fmtK(outputTax);
+  document.getElementById('rITCClaimed').textContent = '₹' + fmtK(netITC);
+  document.getElementById('rNetTax').textContent = '₹' + fmtK(netPayable);
+
+  // Detail table
+  const detailBody = document.getElementById('reportDetailBody');
+  detailBody.innerHTML = `
+    <tr>
+      <td>Output Tax Liability (Outward Supplies)</td>
+      <td class="num">${fmt(totalIGST)}</td>
+      <td class="num">${fmt(totalCGST)}</td>
+      <td class="num">${fmt(totalSGST)}</td>
+      <td class="num">${fmt(outputTax)}</td>
+    </tr>
+    <tr>
+      <td>Input Tax Credit (ITC) Available</td>
+      <td class="num green">${fmt(purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.igst:p.itcEligible==='partial'?p.igst/2:0),0))}</td>
+      <td class="num green">${fmt(purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.cgst:p.itcEligible==='partial'?p.cgst/2:0),0))}</td>
+      <td class="num green">${fmt(purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.sgst:p.itcEligible==='partial'?p.sgst/2:0),0))}</td>
+      <td class="num green">${fmt(netITC)}</td>
+    </tr>
+    <tr style="border-top:1px solid var(--accent);font-weight:600;color:var(--accent)">
+      <td>Net Tax Payable (Cash Ledger)</td>
+      <td class="num">${fmt(Math.max(0, totalIGST - purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.igst:p.itcEligible==='partial'?p.igst/2:0),0)))}</td>
+      <td class="num">${fmt(Math.max(0, totalCGST - purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.cgst:p.itcEligible==='partial'?p.cgst/2:0),0)))}</td>
+      <td class="num">${fmt(Math.max(0, totalSGST - purchases.reduce((a,p)=>a+(p.itcEligible==='yes'?p.sgst:p.itcEligible==='partial'?p.sgst/2:0),0)))}</td>
+      <td class="num">${fmt(netPayable)}</td>
+    </tr>
+  `;
+
+  // Sales list
+  const rsBody = document.getElementById('reportSalesBody');
+  if (invoices.length === 0) {
+    rsBody.innerHTML = '<tr class="empty-row"><td colspan="10">No invoices to show</td></tr>';
+  } else {
+    rsBody.innerHTML = invoices.map((inv, idx) => `
+      <tr>
+        <td>${idx+1}</td>
+        <td>${inv.invNo}</td>
+        <td>${inv.invDate}</td>
+        <td>${inv.buyerName}</td>
+        <td>${inv.invType}</td>
+        <td class="num">${fmt(inv.taxable)}</td>
+        <td class="num">${fmt(inv.cgst)}</td>
+        <td class="num">${fmt(inv.sgst)}</td>
+        <td class="num">${fmt(inv.igst)}</td>
+        <td class="num">${fmt(inv.total)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+// ─── DOWNLOAD ───
+function downloadReport(format) {
+  if (invoices.length === 0) { showToast('⚠ No data to export', 'red'); return; }
+
+  if (format === 'csv') {
+    const headers = ['#','Invoice No','Date','Buyer Name','Buyer GSTIN','Type','POS','Rate%','Taxable','CGST','SGST','IGST','Total'];
+    const rows = invoices.map((inv, i) => [
+      i+1, inv.invNo, inv.invDate, inv.buyerName, inv.buyerGSTIN || '',
+      inv.invType, inv.pos, inv.rate, inv.taxable.toFixed(2),
+      inv.cgst.toFixed(2), inv.sgst.toFixed(2), inv.igst.toFixed(2), inv.total.toFixed(2)
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    downloadFile(csv, 'GST_Return_Summary.csv', 'text/csv');
+    showToast('✓ CSV downloaded');
+  } else if (format === 'json') {
+    const data = {
+      taxpayer: document.getElementById('taxpayerName').value,
+      gstin: document.getElementById('gstin').value,
+      period: `${document.getElementById('taxPeriod').value} FY${document.getElementById('fySelect').value}`,
+      invoices,
+      purchases,
+      summary: {
+        totalSales: invoices.reduce((a,i)=>a+i.taxable,0),
+        outputTax: invoices.reduce((a,i)=>a+i.cgst+i.sgst+i.igst,0),
+        eligibleITC: purchases.reduce((a,p)=>a+p.eligibleTax,0)
+      }
+    };
+    downloadFile(JSON.stringify(data, null, 2), 'GST_Return_Summary.json', 'application/json');
+    showToast('✓ JSON downloaded');
+  }
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function printReport() {
+  window.print();
+}
+
+// ─── SAMPLE DATA ───
+function loadSampleData() {
+  const samples = [
+    { invNo:'INV-001', invDate:'2024-04-05', buyerName:'Sharma Traders', buyerGSTIN:'22AABCS1429B1ZB', pos:'Intra-State', taxable:50000, rate:18, invType:'B2B' },
+    { invNo:'INV-002', invDate:'2024-04-10', buyerName:'Gupta Enterprises', buyerGSTIN:'', pos:'Intra-State', taxable:15000, rate:12, invType:'B2C' },
+    { invNo:'INV-003', invDate:'2024-04-15', buyerName:'Patel & Sons Pvt Ltd', buyerGSTIN:'24AAKFP3086K1ZB', pos:'Inter-State', taxable:80000, rate:18, invType:'B2B' },
+    { invNo:'INV-004', invDate:'2024-04-20', buyerName:'Retail Customer', buyerGSTIN:'', pos:'Intra-State', taxable:5000, rate:5, invType:'B2C' },
+    { invNo:'INV-005', invDate:'2024-04-25', buyerName:'Export Corp USA', buyerGSTIN:'', pos:'Inter-State', taxable:120000, rate:0, invType:'EXP' },
+  ];
+  samples.forEach(s => {
+    const totalTax = s.taxable * s.rate / 100;
+    const isIntra = s.pos === 'Intra-State';
+    invoices.push({ id: Date.now() + Math.random(), ...s,
+      cgst: isIntra ? totalTax/2 : 0,
+      sgst: isIntra ? totalTax/2 : 0,
+      igst: isIntra ? 0 : totalTax,
+      total: s.taxable + totalTax
+    });
+  });
+  renderSalesTable(); updateGSTR1Summary();
+  showToast('✓ Sample invoices loaded');
+}
+
+function loadSamplePurchases() {
+  const samples = [
+    { supName:'ABC Suppliers', supGSTIN:'22AABCS1111A1ZA', purInvNo:'PUR-001', purDate:'2024-04-03', taxable:30000, rate:18, itcEligible:'yes', purType:'Goods' },
+    { supName:'XYZ Services', supGSTIN:'22AAXYZ2222B1ZB', purInvNo:'PUR-002', purDate:'2024-04-08', taxable:10000, rate:18, itcEligible:'yes', purType:'Services' },
+    { supName:'Machinery Hub', supGSTIN:'22AAMAC3333C1ZC', purInvNo:'PUR-003', purDate:'2024-04-12', taxable:50000, rate:28, itcEligible:'yes', purType:'Capital Goods' },
+    { supName:'Restaurant Bills', supGSTIN:'', purInvNo:'PUR-004', purDate:'2024-04-18', taxable:5000, rate:5, itcEligible:'no', purType:'Services' },
+  ];
+  samples.forEach(s => {
+    const totalTax = s.taxable * s.rate / 100;
+    purchases.push({ id: Date.now() + Math.random(), ...s,
+      cgst: totalTax/2, sgst: totalTax/2, igst: 0,
+      eligibleTax: s.itcEligible === 'yes' ? totalTax : s.itcEligible === 'partial' ? totalTax/2 : 0,
+      ineligibleTax: s.itcEligible === 'no' ? totalTax : s.itcEligible === 'partial' ? totalTax/2 : 0
+    });
+  });
+  renderPurchaseTable(); updateITCSummary();
+  showToast('✓ Sample purchases loaded');
+}
+
+// ─── RESET ───
+function resetAll() {
+  if (!confirm('Reset all data? This cannot be undone.')) return;
+  invoices = []; purchases = [];
+  gstr1Filed = false; gstr3bFiled = false;
+  renderSalesTable(); renderPurchaseTable();
+  updateGSTR1Summary(); updateITCSummary();
+  showToast('All data cleared');
+}
+
+// ─── CLEAR FORMS ───
+function clearForm() {
+  ['invNo','invDate','buyerName','buyerGSTIN','taxable'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('gstRate').value = '18';
+  document.getElementById('invType').value = 'B2B';
+  document.getElementById('pos').value = 'Intra-State';
+}
+
+function clearPurchaseForm() {
+  ['supName','supGSTIN','purInvNo','purDate','purTaxable'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('purRate').value = '18';
+  document.getElementById('itcEligible').value = 'yes';
+  document.getElementById('purType').value = 'Goods';
+}
+
+// ─── HELPERS ───
+function fmt(n) { return (n||0).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtK(n) {
+  if (n >= 10000000) return (n/10000000).toFixed(2) + 'Cr';
+  if (n >= 100000) return (n/100000).toFixed(2) + 'L';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return fmt(n);
+}
+function set(id, val) { const el = document.getElementById(id); if(el) el.textContent = val; }
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'red' ? 'var(--red)' : 'var(--accent)';
+  t.style.color = type === 'red' ? '#fff' : '#000';
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ───
+document.getElementById('invDate').valueAsDate = new Date();
+document.getElementById('purDate').valueAsDate = new Date();
+</script>
+</body>
+</html>

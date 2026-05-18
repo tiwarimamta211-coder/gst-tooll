@@ -1,0 +1,324 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);color:var(--color-text-primary)}
+.wrap{padding:1rem 0}
+.hero{background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:1.5rem;margin-bottom:1.5rem;border:0.5px solid var(--color-border-tertiary)}
+.hero h1{font-size:20px;font-weight:500;margin-bottom:4px}
+.hero p{font-size:13px;color:var(--color-text-secondary)}
+.search-row{display:flex;gap:8px;margin-top:1rem}
+#searchInput{flex:1;padding:10px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);font-size:15px;color:var(--color-text-primary);outline:none}
+#searchInput:focus{box-shadow:0 0 0 2px #378ADD44}
+.btn{padding:10px 18px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);font-size:14px;font-weight:500;cursor:pointer;color:var(--color-text-primary);white-space:nowrap}
+.btn:hover{background:var(--color-background-secondary)}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:#378ADD;color:#fff;border-color:#185FA5}
+.btn-primary:hover{background:#185FA5}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+.pill{padding:6px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);font-size:13px;cursor:pointer;color:var(--color-text-secondary);transition:all 0.15s}
+.pill.active{background:#378ADD;color:#fff;border-color:#185FA5}
+.pill:hover:not(.active){background:var(--color-background-secondary)}
+.suggestions{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);margin-top:4px;display:none;max-height:220px;overflow-y:auto;z-index:10;position:relative}
+.sugg-item{padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:10px}
+.sugg-item:last-child{border-bottom:none}
+.sugg-item:hover{background:var(--color-background-secondary)}
+.sugg-hsn{font-size:12px;color:var(--color-text-secondary);font-family:var(--font-mono);background:var(--color-background-secondary);padding:2px 6px;border-radius:4px}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;position:relative}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.card-name{font-size:15px;font-weight:500;flex:1;padding-right:8px}
+.gst-badge{font-size:12px;font-weight:500;padding:4px 10px;border-radius:var(--border-radius-md);white-space:nowrap}
+.gst-0{background:#EAF3DE;color:#3B6D11}
+.gst-5{background:#E6F1FB;color:#185FA5}
+.gst-12{background:#FAEEDA;color:#854F0B}
+.gst-18{background:#FAECE7;color:#993C1D}
+.gst-28{background:#FCEBEB;color:#A32D2D}
+.card-hsn{font-family:var(--font-mono);font-size:20px;font-weight:500;color:var(--color-text-primary);margin:6px 0}
+.card-chapter{font-size:12px;color:var(--color-text-secondary);margin-bottom:10px}
+.card-meta{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.meta-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:6px 10px}
+.meta-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:2px}
+.meta-val{font-size:13px;font-weight:500}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.copy-btn{padding:6px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-secondary);font-size:12px;cursor:pointer;color:var(--color-text-primary);display:flex;align-items:center;gap:4px}
+.copy-btn:hover{background:var(--color-border-tertiary)}
+.copy-btn.copied{background:#EAF3DE;color:#3B6D11;border-color:#9FE1CB}
+.no-results{text-align:center;padding:2.5rem;color:var(--color-text-secondary);font-size:14px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1.5rem}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.75rem 1rem}
+.stat-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.stat-val{font-size:22px;font-weight:500}
+.detail-panel{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1.5rem;display:none}
+.detail-panel.show{display:block}
+.detail-title{font-size:16px;font-weight:500;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.close-btn{cursor:pointer;font-size:18px;color:var(--color-text-secondary);background:none;border:none;line-height:1}
+.tax-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:10px}
+.tax-item{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 12px;text-align:center}
+.tax-item-label{font-size:11px;color:var(--color-text-secondary)}
+.tax-item-val{font-size:16px;font-weight:500;margin-top:2px}
+.section-label{font-size:13px;color:var(--color-text-secondary);margin:12px 0 6px}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 8px;border-radius:12px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+.toast{position:fixed;bottom:20px;right:20px;background:#3B6D11;color:#EAF3DE;padding:10px 18px;border-radius:var(--border-radius-md);font-size:13px;display:none;z-index:999}
+</style>
+
+<div class="wrap">
+<h2 class="sr-only">GST HSN Code Finder — search products to find HSN codes, GST rates, and tax breakdowns</h2>
+
+<div class="hero">
+  <h1>GST HSN Code Finder</h1>
+  <p>Search products to instantly find HSN codes, applicable GST rates, IGST, CGST & SGST breakdowns</p>
+  <div class="search-row">
+    <div style="flex:1;position:relative">
+      <input id="searchInput" type="text" placeholder="Search product name, HSN code, or category..." autocomplete="off">
+      <div id="suggestions" class="suggestions"></div>
+    </div>
+    <button class="btn btn-primary" onclick="doSearch()">Search</button>
+    <button class="btn" onclick="clearAll()">Clear</button>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat"><div class="stat-label">Total products</div><div class="stat-val" id="statTotal">250+</div></div>
+  <div class="stat"><div class="stat-label">GST slabs covered</div><div class="stat-val">5</div></div>
+  <div class="stat"><div class="stat-label">Results shown</div><div class="stat-val" id="statShown">0</div></div>
+  <div class="stat"><div class="stat-label">Last search</div><div class="stat-val" id="statQuery" style="font-size:13px;padding-top:4px">—</div></div>
+</div>
+
+<div class="filter-row">
+  <span style="font-size:13px;color:var(--color-text-secondary);align-self:center">Filter by GST rate:</span>
+  <div class="pill active" onclick="setFilter('all',this)">All</div>
+  <div class="pill" onclick="setFilter('0',this)">0%</div>
+  <div class="pill" onclick="setFilter('5',this)">5%</div>
+  <div class="pill" onclick="setFilter('12',this)">12%</div>
+  <div class="pill" onclick="setFilter('18',this)">18%</div>
+  <div class="pill" onclick="setFilter('28',this)">28%</div>
+</div>
+
+<div id="detailPanel" class="detail-panel">
+  <div class="detail-title">
+    <span id="detailTitle">Product details</span>
+    <button class="close-btn" onclick="closeDetail()">&#x2715;</button>
+  </div>
+  <div id="detailContent"></div>
+</div>
+
+<div id="resultsGrid" class="results-grid"></div>
+<div id="noResults" class="no-results" style="display:none">No products found. Try a different keyword or HSN code.</div>
+</div>
+
+<div class="toast" id="toast">Copied!</div>
+
+<script>
+const DB = [
+  {name:"Rice",hsn:"1006",chapter:"Chapter 10 - Cereals",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Rice including husked, milled, parboiled",tags:["food","grains","exempt"],unit:"KG"},
+  {name:"Wheat",hsn:"1001",chapter:"Chapter 10 - Cereals",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Durum wheat and other wheat",tags:["food","grains","exempt"],unit:"KG"},
+  {name:"Maize / Corn",hsn:"1005",chapter:"Chapter 10 - Cereals",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Maize (corn) for food and feed",tags:["food","grains","exempt"],unit:"KG"},
+  {name:"Milk (Fresh)",hsn:"0401",chapter:"Chapter 04 - Dairy",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Fresh milk and cream, not concentrated",tags:["dairy","food","exempt"],unit:"LTR"},
+  {name:"Eggs",hsn:"0407",chapter:"Chapter 04 - Dairy",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Birds eggs, in shell, fresh",tags:["food","poultry","exempt"],unit:"NOS"},
+  {name:"Salt",hsn:"2501",chapter:"Chapter 25 - Minerals",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Salt including denatured salt, seawater",tags:["food","minerals","exempt"],unit:"KG"},
+  {name:"Books (Printed)",hsn:"4901",chapter:"Chapter 49 - Printed Matter",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Printed books, brochures, leaflets",tags:["education","print","exempt"],unit:"NOS"},
+  {name:"Vegetables (Fresh)",hsn:"0709",chapter:"Chapter 07 - Vegetables",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Fresh or chilled vegetables",tags:["food","vegetables","exempt"],unit:"KG"},
+  {name:"Fruits (Fresh)",hsn:"0804",chapter:"Chapter 08 - Fruits",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Dates, figs, pineapples, mangoes, fresh",tags:["food","fruits","exempt"],unit:"KG"},
+  {name:"Meat (Fresh)",hsn:"0201",chapter:"Chapter 02 - Meat",gst:0,igst:0,cgst:0,sgst:0,cess:0,desc:"Meat of bovine animals, fresh or chilled",tags:["food","meat","exempt"],unit:"KG"},
+
+  {name:"Sugar",hsn:"1701",chapter:"Chapter 17 - Sugar",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Cane or beet sugar, sucrose",tags:["food","sweetener"],unit:"KG"},
+  {name:"Tea (Packed)",hsn:"0902",chapter:"Chapter 09 - Tea & Coffee",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Packed and branded tea",tags:["beverage","food"],unit:"KG"},
+  {name:"Coffee (Roasted)",hsn:"0901",chapter:"Chapter 09 - Tea & Coffee",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Coffee, roasted, decaffeinated or not",tags:["beverage","food"],unit:"KG"},
+  {name:"Edible Oil",hsn:"1511",chapter:"Chapter 15 - Oils",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Palm oil and fractions, crude or refined",tags:["food","cooking"],unit:"LTR"},
+  {name:"Paneer",hsn:"0406",chapter:"Chapter 04 - Dairy",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Cheese and curd including paneer",tags:["dairy","food"],unit:"KG"},
+  {name:"Footwear (below ₹1000)",hsn:"6404",chapter:"Chapter 64 - Footwear",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Footwear with rubber soles, value ≤₹1000",tags:["garment","retail"],unit:"PAIR"},
+  {name:"Coal",hsn:"2701",chapter:"Chapter 27 - Fuels",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Coal, briquettes, ovoids",tags:["energy","minerals"],unit:"MT"},
+  {name:"Fertilizers",hsn:"3102",chapter:"Chapter 31 - Fertilizers",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Mineral or chemical fertilizers",tags:["agriculture","chemicals"],unit:"KG"},
+  {name:"Handloom Fabrics",hsn:"5208",chapter:"Chapter 52 - Cotton",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Woven fabrics of cotton, handloom",tags:["textile","fabric"],unit:"MTR"},
+  {name:"Agarbatti / Incense",hsn:"3307",chapter:"Chapter 33 - Perfumery",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Agarbatti and other odoriferous preparations",tags:["religious","household"],unit:"KG"},
+  {name:"Life Saving Drugs",hsn:"3004",chapter:"Chapter 30 - Pharmaceuticals",gst:5,igst:5,cgst:2.5,sgst:2.5,cess:0,desc:"Medicaments for therapeutic use",tags:["pharma","medicine"],unit:"NOS"},
+
+  {name:"Butter",hsn:"0405",chapter:"Chapter 04 - Dairy",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Butter and dairy spreads",tags:["dairy","food"],unit:"KG"},
+  {name:"Ghee",hsn:"0405",chapter:"Chapter 04 - Dairy",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Clarified butter (ghee)",tags:["dairy","food"],unit:"KG"},
+  {name:"Frozen Meat",hsn:"0202",chapter:"Chapter 02 - Meat",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Meat of bovine animals, frozen",tags:["food","meat"],unit:"KG"},
+  {name:"Packaged Dry Fruits",hsn:"0813",chapter:"Chapter 08 - Fruits",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Dried fruits, in branded packs",tags:["food","snacks"],unit:"KG"},
+  {name:"Mobile Phones",hsn:"8517",chapter:"Chapter 85 - Electronics",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Telephone sets including smartphones",tags:["electronics","telecom"],unit:"NOS"},
+  {name:"Printed Circuits",hsn:"8534",chapter:"Chapter 85 - Electronics",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Printed circuit boards",tags:["electronics","components"],unit:"NOS"},
+  {name:"Exercise Books",hsn:"4820",chapter:"Chapter 48 - Paper",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Registers, notebooks, exercise books",tags:["stationery","education"],unit:"NOS"},
+  {name:"Medicines (Other)",hsn:"3004",chapter:"Chapter 30 - Pharmaceuticals",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Other medicaments, retail pack",tags:["pharma","medicine"],unit:"NOS"},
+  {name:"Sewing Machines",hsn:"8452",chapter:"Chapter 84 - Machinery",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Sewing machines, household type",tags:["machinery","textile"],unit:"NOS"},
+  {name:"Ayurvedic Medicine",hsn:"3003",chapter:"Chapter 30 - Pharmaceuticals",gst:12,igst:12,cgst:6,sgst:6,cess:0,desc:"Ayurvedic, unani, siddha preparations",tags:["pharma","herbal"],unit:"NOS"},
+
+  {name:"Soap",hsn:"3401",chapter:"Chapter 34 - Soap",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Soap, organic surface-active products",tags:["hygiene","household"],unit:"KG"},
+  {name:"Toothpaste",hsn:"3306",chapter:"Chapter 33 - Toiletries",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Preparations for dental hygiene",tags:["hygiene","personal care"],unit:"KG"},
+  {name:"Shampoo",hsn:"3305",chapter:"Chapter 33 - Toiletries",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Hair preparations including shampoo",tags:["hygiene","personal care"],unit:"LTR"},
+  {name:"Computers (Laptops)",hsn:"8471",chapter:"Chapter 84 - Machinery",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Automatic data processing machines",tags:["electronics","IT"],unit:"NOS"},
+  {name:"Steel (Flat Rolled)",hsn:"7208",chapter:"Chapter 72 - Iron & Steel",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Flat-rolled products of iron/steel",tags:["metals","construction"],unit:"MT"},
+  {name:"Cement",hsn:"2523",chapter:"Chapter 25 - Minerals",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Portland cement, aluminous cement",tags:["construction","minerals"],unit:"MT"},
+  {name:"Camera",hsn:"9006",chapter:"Chapter 90 - Optical",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Photographic cameras and flashguns",tags:["electronics","optical"],unit:"NOS"},
+  {name:"Air Conditioner",hsn:"8415",chapter:"Chapter 84 - Machinery",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Air conditioning machines, window/split",tags:["appliance","cooling"],unit:"NOS"},
+  {name:"Refrigerator",hsn:"8418",chapter:"Chapter 84 - Machinery",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Refrigerators and freezers",tags:["appliance","kitchen"],unit:"NOS"},
+  {name:"Washing Machine",hsn:"8450",chapter:"Chapter 84 - Machinery",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Household type washing machines",tags:["appliance","laundry"],unit:"NOS"},
+  {name:"Cigarettes",hsn:"2402",chapter:"Chapter 24 - Tobacco",gst:28,igst:28,cgst:14,sgst:14,cess:5,desc:"Cigarettes containing tobacco",tags:["tobacco","luxury"],unit:"NOS"},
+  {name:"Pan Masala",hsn:"2106",chapter:"Chapter 21 - Misc Food",gst:28,igst:28,cgst:14,sgst:14,cess:60,desc:"Pan masala, betel preparations",tags:["tobacco","demerit"],unit:"KG"},
+  {name:"Aerated Drinks",hsn:"2202",chapter:"Chapter 22 - Beverages",gst:28,igst:28,cgst:14,sgst:14,cess:12,desc:"Waters with sugar or flavouring",tags:["beverage","demerit"],unit:"LTR"},
+  {name:"Cars (Petrol <1200cc)",hsn:"8703",chapter:"Chapter 87 - Vehicles",gst:28,igst:28,cgst:14,sgst:14,cess:1,desc:"Motor cars for transport of persons",tags:["vehicles","automobile"],unit:"NOS"},
+  {name:"SUV / Luxury Car",hsn:"8703",chapter:"Chapter 87 - Vehicles",gst:28,igst:28,cgst:14,sgst:14,cess:22,desc:"Motor cars >1500cc or >4m length",tags:["vehicles","luxury"],unit:"NOS"},
+  {name:"Paint",hsn:"3208",chapter:"Chapter 32 - Paints",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Paints and varnishes, polymer-based",tags:["construction","chemicals"],unit:"LTR"},
+  {name:"Tiles (Ceramic)",hsn:"6908",chapter:"Chapter 69 - Ceramics",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Glazed ceramic tiles for floors/walls",tags:["construction","ceramic"],unit:"SQM"},
+  {name:"Perfume",hsn:"3303",chapter:"Chapter 33 - Perfumery",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Perfumes and toilet waters",tags:["luxury","personal care"],unit:"ML"},
+  {name:"Chocolate",hsn:"1806",chapter:"Chapter 18 - Cocoa",gst:28,igst:28,cgst:14,sgst:14,cess:0,desc:"Chocolate and cocoa preparations",tags:["food","luxury","confectionery"],unit:"KG"},
+  {name:"Wrist Watch",hsn:"9101",chapter:"Chapter 91 - Watches",gst:18,igst:18,cgst:9,sgst:9,cess:0,desc:"Wrist watches, pocket watches",tags:["accessories","luxury"],unit:"NOS"},
+];
+
+let currentFilter = 'all';
+let currentResults = [];
+let selectedItem = null;
+
+function badgeClass(gst){return 'gst-'+gst}
+
+function renderCard(item){
+  const cls = badgeClass(item.gst);
+  const cessNote = item.cess > 0 ? ` + ${item.cess}% Cess` : '';
+  return `<div class="card" onclick="showDetail(${DB.indexOf(item)})">
+    <div class="card-header">
+      <div class="card-name">${item.name}</div>
+      <span class="gst-badge ${cls}">${item.gst}% GST${cessNote}</span>
+    </div>
+    <div class="card-hsn">${item.hsn}</div>
+    <div class="card-chapter">${item.chapter}</div>
+    <div class="card-meta">
+      <div class="meta-item"><div class="meta-label">IGST</div><div class="meta-val">${item.igst}%</div></div>
+      <div class="meta-item"><div class="meta-label">CGST + SGST</div><div class="meta-val">${item.cgst}% + ${item.sgst}%</div></div>
+      <div class="meta-item"><div class="meta-label">Unit</div><div class="meta-val">${item.unit}</div></div>
+      <div class="meta-item"><div class="meta-label">Cess</div><div class="meta-val">${item.cess > 0 ? item.cess+'%' : 'NIL'}</div></div>
+    </div>
+    <div class="card-actions" onclick="event.stopPropagation()">
+      <button class="copy-btn" onclick="copyText('${item.hsn}',this)">&#x2398; Copy HSN</button>
+      <button class="copy-btn" onclick="copyText('HSN: ${item.hsn} | GST: ${item.gst}% | IGST: ${item.igst}% | CGST: ${item.cgst}% | SGST: ${item.sgst}%',this)">&#x2398; Copy All</button>
+      <button class="copy-btn" onclick="copyText('${item.name}: HSN ${item.hsn}, GST @${item.gst}%, IGST ${item.igst}%, CGST ${item.cgst}%, SGST ${item.sgst}%',this)">&#x2398; Copy Report</button>
+    </div>
+  </div>`;
+}
+
+function doSearch(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  document.getElementById('suggestions').style.display='none';
+  document.getElementById('statQuery').textContent = q || '—';
+  let res = DB.filter(item=>{
+    if(currentFilter !== 'all' && String(item.gst) !== currentFilter) return false;
+    if(!q) return true;
+    return item.name.toLowerCase().includes(q) ||
+      item.hsn.includes(q) ||
+      item.chapter.toLowerCase().includes(q) ||
+      item.tags.some(t=>t.includes(q)) ||
+      item.desc.toLowerCase().includes(q);
+  });
+  currentResults = res;
+  renderGrid(res);
+}
+
+function renderGrid(res){
+  const grid = document.getElementById('resultsGrid');
+  const nr = document.getElementById('noResults');
+  document.getElementById('statShown').textContent = res.length;
+  if(res.length === 0){
+    grid.innerHTML=''; nr.style.display='block';
+  } else {
+    nr.style.display='none';
+    grid.innerHTML = res.map(renderCard).join('');
+  }
+}
+
+function setFilter(val, el){
+  currentFilter = val;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  doSearch();
+}
+
+function clearAll(){
+  document.getElementById('searchInput').value='';
+  currentFilter='all';
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.pill')[0].classList.add('active');
+  document.getElementById('suggestions').style.display='none';
+  document.getElementById('statQuery').textContent='—';
+  closeDetail();
+  renderGrid([]);
+  document.getElementById('statShown').textContent=0;
+}
+
+function copyText(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig = btn.innerHTML;
+    btn.innerHTML='&#x2713; Copied!';
+    btn.classList.add('copied');
+    const toast = document.getElementById('toast');
+    toast.style.display='block';
+    setTimeout(()=>{btn.innerHTML=orig;btn.classList.remove('copied');toast.style.display='none'},1800);
+  });
+}
+
+function showDetail(idx){
+  const item = DB[idx];
+  const p = document.getElementById('detailPanel');
+  document.getElementById('detailTitle').textContent = item.name + ' — Full GST Details';
+  const cessRow = item.cess > 0 ? `<div class="tax-item"><div class="tax-item-label">Cess</div><div class="tax-item-val">${item.cess}%</div></div>` : '';
+  const total = item.igst + item.cess;
+  document.getElementById('detailContent').innerHTML = `
+    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">${item.desc}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="gst-badge ${badgeClass(item.gst)}">${item.gst}% GST Slab</span>
+      <span style="font-size:12px;background:var(--color-background-secondary);padding:4px 10px;border-radius:var(--border-radius-md);color:var(--color-text-secondary)">HSN: <strong>${item.hsn}</strong></span>
+      <span style="font-size:12px;background:var(--color-background-secondary);padding:4px 10px;border-radius:var(--border-radius-md);color:var(--color-text-secondary)">Unit: ${item.unit}</span>
+    </div>
+    <div class="tax-breakdown">
+      <div class="tax-item"><div class="tax-item-label">IGST (Inter-state)</div><div class="tax-item-val">${item.igst}%</div></div>
+      <div class="tax-item"><div class="tax-item-label">CGST (Central)</div><div class="tax-item-val">${item.cgst}%</div></div>
+      <div class="tax-item"><div class="tax-item-label">SGST (State)</div><div class="tax-item-val">${item.sgst}%</div></div>
+      ${cessRow}
+      <div class="tax-item" style="background:var(--color-background-info)"><div class="tax-item-label" style="color:var(--color-text-info)">Total (incl. Cess)</div><div class="tax-item-val" style="color:var(--color-text-info)">${total}%</div></div>
+    </div>
+    <div class="section-label">${item.chapter}</div>
+    <div class="section-label">Keywords</div>
+    <div class="tag-row">${item.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap">
+      <button class="copy-btn" onclick="copyText('${item.hsn}',this)">&#x2398; Copy HSN Code</button>
+      <button class="copy-btn" onclick="copyText('${item.name}: HSN ${item.hsn} | GST ${item.gst}% | IGST ${item.igst}% | CGST ${item.cgst}% | SGST ${item.sgst}%${item.cess>0?' | Cess '+item.cess+'%':''}',this)">&#x2398; Copy Full Details</button>
+    </div>`;
+  p.classList.add('show');
+  p.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeDetail(){
+  document.getElementById('detailPanel').classList.remove('show');
+}
+
+const input = document.getElementById('searchInput');
+const suggBox = document.getElementById('suggestions');
+
+input.addEventListener('input', function(){
+  const q = this.value.trim().toLowerCase();
+  if(q.length < 2){suggBox.style.display='none';return}
+  const matches = DB.filter(item=>
+    item.name.toLowerCase().includes(q)||item.hsn.startsWith(q)||item.tags.some(t=>t.includes(q))
+  ).slice(0,8);
+  if(matches.length===0){suggBox.style.display='none';return}
+  suggBox.innerHTML = matches.map(item=>`
+    <div class="sugg-item" onclick="selectSugg('${item.name}')">
+      <span>${item.name}</span>
+      <span class="sugg-hsn">${item.hsn}</span>
+      <span class="gst-badge ${badgeClass(item.gst)}" style="font-size:11px;padding:2px 7px">${item.gst}%</span>
+    </div>`).join('');
+  suggBox.style.display='block';
+});
+
+function selectSugg(name){
+  input.value = name;
+  suggBox.style.display='none';
+  doSearch();
+}
+
+input.addEventListener('keydown', e=>{if(e.key==='Enter')doSearch()});
+document.addEventListener('click', e=>{if(!e.target.closest('#searchInput')&&!e.target.closest('#suggestions'))suggBox.style.display='none'});
+
+renderGrid([]);
+document.getElementById('statTotal').textContent = DB.length + '+';
+</script>
